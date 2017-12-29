@@ -3,6 +3,8 @@ import Vuex from 'vuex'
 import axios from './axios-auth';
 import globalAxios from 'axios'
 
+import router from './router'
+
 import Tokens from './tokens'
 
 Vue.use(Vuex)
@@ -20,9 +22,18 @@ export default new Vuex.Store({
   	},
   	storeUser (state, user){
   		state.user = user
-  	}
+	  },
+	clearAuthData(state){
+		state.idToken = null
+		state.userId = null
+	}
   },
   actions: {
+	setLogoutTimer ({dispatch},expirationTime){
+		setTimeout(() => {
+			dispatch('logout')
+		},expirationTime * 1000 )
+	},
   	signup({commit, dispatch}, authData){
   		axios.post('/signupNewUser?key='+ Tokens.token, 
           {email: authData.email, password: authData.password, returnSecureToken: true})
@@ -31,13 +42,18 @@ export default new Vuex.Store({
         	commit('authUser', {
         		token: res.data.idToken,
         		userId: res.data.localId
-        	})
-        	dispatch('storeUser', authData)
+			})
+			const now  = new Date()
+			const exporationDate = new Date ( now.getTime() + res.data.expiresIn * 1000)
+			localStorage.setItem('token', res.data.idToken)
+			localStorage.setItem('expirationDate', exporationDate)
+			dispatch('storeUser', authData)
+			dispatch('setLogoutTimer', res.data.expiresIn)
         })
         .catch(error=> console.log(error))
 
   	},
-  	login({commit}, authData){
+  	login({commit, dispatch}, authData){
   		axios.post('/verifyPassword?key='+ Tokens.token, 
         {email: authData.email, password: authData.password, returnSecureToken: true})
       .then(res =>{
@@ -45,7 +61,12 @@ export default new Vuex.Store({
         	commit('authUser', {
         		token: res.data.idToken,
         		userId: res.data.localId
-        	})
+			})
+			const now  = new Date()
+			const exporationDate = new Date ( now.getTime() + res.data.expiresIn * 1000)
+			localStorage.setItem('token', res.data.idToken)
+			localStorage.setItem('expirationDate', exporationDate)
+			dispatch('setLogoutTimer', res.data.expiresIn)
         })
       .catch(error=> console.log(error))
   	},
@@ -76,11 +97,31 @@ export default new Vuex.Store({
               this.email = users[0].email
             })
         .catch(error =>console.log(error))
-  	}
+	  },
+	  logout({commit}){
+		  commit('clearAuthData')
+		  router.replace('/signin')
+	  },
+	  tryAutoLogin({commit}){
+		  const token = localStorage.getItem('token')
+		  if(!token){
+			  return
+		  }
+		  const expirationDate = localStorage.getItem('expirationDate')
+		  const now = new Date()
+		  if (now >= expirationDate){
+			  return
+		  }
+
+		  
+	  }
   },
   getters: {
   	user(state){
   		return state.user
-  	}
+	  },
+	isAuthenticated(state){
+		return state.idToken !== null
+	}
   }
 })
