@@ -1,7 +1,8 @@
 .DS_Store
-/node_modules/
-/dist/
-./src/tokens.js
+node_modules/
+dist/
+src/tokens.js
+src/tokens1.js
 npm-debug.log
 yarn-error.log
 
