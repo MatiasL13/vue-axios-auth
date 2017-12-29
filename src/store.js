@@ -3,8 +3,11 @@ import Vuex from 'vuex'
 import axios from './axios-auth';
 import globalAxios from 'axios'
 
+<<<<<<< HEAD
 import router from './router'
 
+=======
+>>>>>>> 47cfb47fb4e363301b5ebac64da670c30710ae17
 import Tokens from './tokens'
 
 Vue.use(Vuex)
@@ -53,7 +56,11 @@ export default new Vuex.Store({
         .catch(error=> console.log(error))
 
   	},
+<<<<<<< HEAD
   	login({commit, dispatch}, authData){
+=======
+  	login({commit}, authData){
+>>>>>>> 47cfb47fb4e363301b5ebac64da670c30710ae17
   		axios.post('/verifyPassword?key='+ Tokens.token, 
         {email: authData.email, password: authData.password, returnSecureToken: true})
       .then(res =>{
