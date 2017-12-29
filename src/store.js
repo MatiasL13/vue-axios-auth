@@ -2,6 +2,9 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import axios from './axios-auth';
 import globalAxios from 'axios'
+
+import Token from './token'
+
 Vue.use(Vuex)
 
 export default new Vuex.Store({
@@ -21,7 +24,7 @@ export default new Vuex.Store({
   },
   actions: {
   	signup({commit, dispatch}, authData){
-  		axios.post('/signupNewUser?key=[token]', 
+  		axios.post('/signupNewUser?key='+ Token.token, 
           {email: authData.email, password: authData.password, returnSecureToken: true})
         .then(res =>{
         	console.log(res)
@@ -35,7 +38,7 @@ export default new Vuex.Store({
 
   	},
   	login({commit}, authData){
-  		axios.post('/verifyPassword?key=[token]', 
+  		axios.post('/verifyPassword?key='+ Token.token, 
         {email: authData.email, password: authData.password, returnSecureToken: true})
       .then(res =>{
         	console.log(res)
