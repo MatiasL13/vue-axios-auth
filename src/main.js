@@ -1,9 +1,12 @@
 import Vue from 'vue'
 import App from './App.vue'
+import Vuelidate from 'vuelidate'
+
 
 import router from './router'
 import store from './store'
 import axios from 'axios'
+Vue.use(Vuelidate)
 
 axios.defaults.baseURL = 'https://auth-vue-axios.firebaseio.com';
 /*axios.defaults.headers.common['Authorization'] = 'asd'*/
@@ -23,9 +26,12 @@ const resInterceptor = axios.interceptors.response.use(res => {
 axios.interceptors.request.eject(reqInterceptor)
 axios.interceptors.response.eject(resInterceptor)
 
+
+
+
 new Vue({
-  el: '#app',
-  router,
-  store,
-  render: h => h(App)
+	el: '#app',
+	router,
+	store,
+	render: h => h(App)
 })
