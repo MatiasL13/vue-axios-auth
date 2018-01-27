@@ -7,29 +7,33 @@
           <input
                   type="email"
                   id="email"
-                  @input="$v.email.$touch()"
+                  @blur="$v.email.$touch()"
                   v-model="email">
                   <p v-if="$v.email.$error">Email invalido</p>
         </div>
-        <div class="input">
+        <div class="input" :class="{invalid: $v.age.$error}">
           <label for="age">Your Age</label>
           <input
                   type="number"
                   id="age"
+                  @blur="$v.age.$touch()"
                   v-model.number="age">
+                  <p v-if="$v.age.$error">Edad invalida, no debe ser menor de edad ({{$v.age.$params.minVal.min}})</p>
         </div>
-        <div class="input">
+        <div class="input" :class="{invalid: $v.password.$error}">
           <label for="password">Password</label>
           <input
                   type="password"
                   id="password"
+                  @blur="$v.password.$touch()"
                   v-model="password">
         </div>
-        <div class="input">
+        <div class="input" :class="{invalid: $v.confirmPassword.$error}">
           <label for="confirm-password">Confirm Password</label>
           <input
                   type="password"
                   id="confirm-password"
+                  @blur="$v.confirmPassword.$touch()"
                   v-model="confirmPassword">
         </div>
         <div class="input">
@@ -47,23 +51,29 @@
           <div class="hobby-list">
             <div
                     class="input"
+                    :class="{invalid: $v.hobbyInputs.$each[index].$error}"
                     v-for="(hobbyInput, index) in hobbyInputs"
                     :key="hobbyInput.id">
               <label :for="hobbyInput.id">Hobby #{{ index }}</label>
               <input
                       type="text"
                       :id="hobbyInput.id"
+                      @blur="$v.hobbyInputs.$each[index].value.$touch()"
                       v-model="hobbyInput.value">
               <button @click="onDeleteHobby(hobbyInput.id)" type="button">X</button>
             </div>
+            <p v-if="!$v.hobbyInputs.minLen"> Especifica por lo menos {{$v.hobbyInputs.$params.minLen.min}} hobbies</p>
+            <p v-if="!$v.hobbyInputs.requiredUnless">Agregue hobbies</p>
           </div>
         </div>
-        <div class="input inline">
-          <input type="checkbox" id="terms" v-model="terms">
+        <div class="input inline" :class="{invalid: $v.terms.$invalid}">
+          <input type="checkbox"
+                  id="terms"  
+                  @change="$v.terms.$touch()" v-model="terms">
           <label for="terms">Accept Terms of Use</label>
         </div>
         <div class="submit">
-          <button type="submit">Submit</button>
+          <button type="submit" :disabled="$v.$invalid">Submit</button>
         </div>
       </form>
     </div>
@@ -73,9 +83,9 @@
 <script>
 
 
-  import {required, email} from 'vuelidate/lib/validators'
+  import {required, email, numeric, minValue, minLength, sameAs, requiredUnless } from 'vuelidate/lib/validators'
+  import axios from 'axios'
   export default {
-   
     data () {
       return {
         email: '',
@@ -90,7 +100,50 @@
     validations:{
       email: {
         required: required,
-        email: email
+        email: email,
+        unique: val =>{
+          if(val ==='') return true // no importa si es unico si esta vacio
+          return axios.get('/users.json?orderBy="email"&equalTo="'+ val + '"')
+            .then(res =>{
+              console.log(res)
+              return Object.keys(res.data).length === 0 // revisa si el objeto esta  vacio
+            })
+          // return new Promise((resolve, reject) => {
+          //   setTimeout(() => {
+          //     resolve( val !== 'test@test.com')
+          //   }, 1000);
+            
+          // })
+        }
+      },
+      age: {
+        required,
+        numeric,
+        minVal: minValue(18)
+      },
+      password:{
+        required,
+        minLen: minLength(6)
+      },
+      confirmPassword:{
+        //sameAs: sameAs('password') another way vvvv
+        sameAs: sameAs(vm => {return vm.password
+        })
+      },
+      terms:{
+        required: requiredUnless(vm =>{
+          return vm.country == 'germany'
+        })
+      },
+      hobbyInputs:{ 
+        required,
+        minLen: minLength(2), //al menos un hobby
+        $each:{ 
+          value:{
+            required,
+            minLen: minLength(5) // que contenga al menos 5 letras
+          }
+        }
       }
     },
     methods: {
